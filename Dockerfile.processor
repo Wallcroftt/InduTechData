@@ -1,0 +1,22 @@
+# Utilisation d'une version stable de Debian (Bookworm) pour Java 17
+FROM python:3.9-slim-bookworm
+
+# 1. Installation de Java 17 (Obligatoire pour Spark) + utilitaires
+RUN apt-get update && \
+    apt-get install -y openjdk-17-jre-headless procps && \
+    apt-get clean;
+
+# Définition de la variable JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# 2. Installation des librairies Python
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 3. Copie du script PySpark (AVEC LE BON NOM)
+# On copie votre fichier local vers le conteneur
+COPY ticket_processor_export_container.py .
+
+# Commande de lancement (AVEC LE BON NOM)
+CMD ["python", "-u", "ticket_processor_export_container.py"]

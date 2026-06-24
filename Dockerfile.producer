@@ -1,0 +1,15 @@
+# Utilisation d'une version stable de Debian (Bookworm)
+FROM python:3.9-slim-bookworm
+
+# Définition du dossier de travail
+WORKDIR /app
+
+# Copie des dépendances et installation
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copie du code source
+COPY ticket_producer.py .
+
+# Commande de lancement
+CMD ["python", "-u", "ticket_producer.py"]

@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------
+  # 1. Cluster Redpanda (Kafka Only)
+  # ---------------------------------------
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.1
+    container_name: redpanda
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 1G
+      - --reserve-memory 0M
+      - --overprovisioned
+      # Configuration Kafka 
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      
+      
+    ports:
+      - "19092:19092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------
+  # 2. Producteur de Tickets (Python)
+  # ---------------------------------------
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile.producer
+    container_name: ticket_producer
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP: "redpanda:9092"
+      NB_TICKETS: 100
+
+  # ---------------------------------------
+  # 3. Processeur Spark (PySpark)
+  # ---------------------------------------
+  processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.processor
+    container_name: ticket_processor
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "redpanda:9092"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      AWS_REGION: ${AWS_REGION}
+    volumes:
+      - ./output_analysis:/app/output_analysis
+
+  # ---------------------------------------
+  # 4. Interface Graphique (Redpanda Console)
+  # ---------------------------------------
+  console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: redpanda_console
+    environment:
+      # CONFIGURATION SIMPLIFIÉE
+      KAFKA_BROKERS: "redpanda:9092"
+      # On désactive ce qui n'est pas activé sur votre Redpanda pour éviter les crashs
+      KAFKA_SCHEMAREGISTRY_ENABLED: "false"
+      REDPANDA_ADMINAPI_ENABLED: "false"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redpanda
+
+volumes:
+  redpanda_data:

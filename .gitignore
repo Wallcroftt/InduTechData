@@ -1,0 +1,16 @@
+# Environnement et secrets
+.env
+venv/
+
+# Fichiers d'exemple à conserver
+!.env.example
+
+# IDE et systeme
+.code-workspace
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# Dossiers de travail
+checkpoints/
+data/
