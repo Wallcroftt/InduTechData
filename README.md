@@ -31,3 +31,27 @@ KAFKA_BOOTSTRAP=redpanda:9092
 AWS_ACCESS_KEY_ID=votre_cle
 AWS_SECRET_ACCESS_KEY=votre_secret
 S3_BUCKET_NAME=nom_du_bucket
+
+```
+
+### 3. Lancement
+
+Démarrez l'infrastructure complète avec une seule commande :
+
+```bash
+docker-compose up -d --build
+
+```
+
+* **Monitoring :** Accédez à la console Redpanda sur `http://localhost:8080`.
+* **Sortie :** Les fichiers traités sont disponibles dans le dossier `output_analysis/` monté localement.
+
+## 🧠 Points forts techniques
+
+* **Mode Hybride :** Code capable de basculer dynamiquement entre un stockage local et un stockage S3 (Cloud).
+* **Idempotence & Monitoring :** Utilisation de `checkpointLocation` pour garantir la reprise du traitement après une interruption.
+* **Data Quality :** Schéma strict défini via `pyspark.sql.types` pour valider chaque ticket entrant.
+
+---
+
+*Projet réalisé dans le cadre de la certification Expert en ingénierie et science des données.*
